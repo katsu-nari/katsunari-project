@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>買い物リスト</title>
+  <title>植松家の買い物リスト</title>
   <style>
     * {
       box-sizing: border-box;
@@ -137,6 +137,26 @@
       color: #e53e3e;
     }
 
+    .clear-btn {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: #fff;
+      color: #e53e3e;
+      border: 1.5px solid #e53e3e;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .clear-btn:active {
+      background: #e53e3e;
+      color: #fff;
+    }
+
     .empty {
       text-align: center;
       color: #bbb;
@@ -147,7 +167,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>🛒 買い物リスト</h1>
+    <h1>🛒 植松家の買い物リスト</h1>
 
     <div class="input-row">
       <input type="text" id="itemInput" placeholder="アイテムを入力..." maxlength="100">
@@ -158,6 +178,7 @@
 
     <ul class="list" id="list"></ul>
     <p class="empty" id="empty">リストは空です</p>
+    <button class="clear-btn" id="clearBtn" onclick="clearAll()" style="display:none">全て削除</button>
   </div>
 
   <script>
@@ -174,17 +195,26 @@
 
       list.innerHTML = '';
 
+      const clearBtn = document.getElementById('clearBtn');
+
       if (items.length === 0) {
         empty.style.display = 'block';
+        clearBtn.style.display = 'none';
         summary.textContent = '';
         return;
       }
 
       empty.style.display = 'none';
+      clearBtn.style.display = 'block';
       const checked = items.filter(i => i.checked).length;
       summary.textContent = `${checked} / ${items.length} 件完了`;
 
-      items.forEach((item, index) => {
+      const sorted = [
+        ...items.map((item, index) => ({ item, index })).filter(e => !e.item.checked),
+        ...items.map((item, index) => ({ item, index })).filter(e => e.item.checked),
+      ];
+
+      sorted.forEach(({ item, index }) => {
         const li = document.createElement('li');
         li.className = 'list-item' + (item.checked ? ' checked' : '');
 
@@ -229,6 +259,13 @@
 
     function deleteItem(index) {
       items.splice(index, 1);
+      save();
+      render();
+    }
+
+    function clearAll() {
+      if (!confirm('リストを全て削除しますか？')) return;
+      items = [];
       save();
       render();
     }
