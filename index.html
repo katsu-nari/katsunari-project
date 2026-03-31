@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>買い物リスト</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 12px 14px;
+      font-size: 1rem;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+
+    .input-row input:focus {
+      border-color: #4c8bf5;
+    }
+
+    .input-row button {
+      padding: 12px 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #4c8bf5;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .input-row button:active {
+      background: #3570d4;
+    }
+
+    .summary {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+
+    .list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: opacity 0.2s;
+    }
+
+    .list-item.checked {
+      opacity: 0.5;
+    }
+
+    .list-item input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      accent-color: #4c8bf5;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .item-name {
+      flex: 1;
+      font-size: 1rem;
+      color: #1a1a1a;
+      word-break: break-all;
+    }
+
+    .list-item.checked .item-name {
+      text-decoration: line-through;
+      color: #999;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #ccc;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:active {
+      color: #e53e3e;
+    }
+
+    .empty {
+      text-align: center;
+      color: #bbb;
+      font-size: 0.95rem;
+      padding: 40px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛒 買い物リスト</h1>
+
+    <div class="input-row">
+      <input type="text" id="itemInput" placeholder="アイテムを入力..." maxlength="100">
+      <button onclick="addItem()">追加</button>
+    </div>
+
+    <div class="summary" id="summary"></div>
+
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">リストは空です</p>
+  </div>
+
+  <script>
+    let items = JSON.parse(localStorage.getItem('shoppingList') || '[]');
+
+    function save() {
+      localStorage.setItem('shoppingList', JSON.stringify(items));
+    }
+
+    function render() {
+      const list = document.getElementById('list');
+      const empty = document.getElementById('empty');
+      const summary = document.getElementById('summary');
+
+      list.innerHTML = '';
+
+      if (items.length === 0) {
+        empty.style.display = 'block';
+        summary.textContent = '';
+        return;
+      }
+
+      empty.style.display = 'none';
+      const checked = items.filter(i => i.checked).length;
+      summary.textContent = `${checked} / ${items.length} 件完了`;
+
+      items.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'list-item' + (item.checked ? ' checked' : '');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = item.checked;
+        checkbox.addEventListener('change', () => toggleItem(index));
+
+        const span = document.createElement('span');
+        span.className = 'item-name';
+        span.textContent = item.name;
+
+        const btn = document.createElement('button');
+        btn.className = 'delete-btn';
+        btn.textContent = '✕';
+        btn.setAttribute('aria-label', '削除');
+        btn.addEventListener('click', () => deleteItem(index));
+
+        li.appendChild(checkbox);
+        li.appendChild(span);
+        li.appendChild(btn);
+        list.appendChild(li);
+      });
+    }
+
+    function addItem() {
+      const input = document.getElementById('itemInput');
+      const name = input.value.trim();
+      if (!name) return;
+      items.push({ name, checked: false });
+      save();
+      render();
+      input.value = '';
+      input.focus();
+    }
+
+    function toggleItem(index) {
+      items[index].checked = !items[index].checked;
+      save();
+      render();
+    }
+
+    function deleteItem(index) {
+      items.splice(index, 1);
+      save();
+      render();
+    }
+
+    document.getElementById('itemInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addItem();
+    });
+
+    render();
+  </script>
+</body>
+</html>
